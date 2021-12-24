@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" type="text/css" href="{% static 'desktop_streaming/css/base.css' %}">
+        <script src="{% static 'desktop_streaming/js/uuid.js' %}"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.js"></script>
+        <script src="{% static 'desktop_streaming/js/create_room.js' %}"></script>
+        <title>Desktop Streaming</title>
+    </head>
+    <body>
+        <form class="box">
+            <div class="title has-text-centered">
+                <span class="is-inline-block">部屋を作成</span>
+            </div>
+            <div class="field">
+                <label class="label">部屋ID</label>
+                <div class="control">
+                  <input id="room_id"class="input" type="text" placeholder="room id">
+                  <p class="help is-danger is-hidden">部屋IDは必須です．</p>
+                </div>
+            </div>
+            <div class="has-text-right">
+                <button id="join_button" class="button is-link" type="button">作成</button>
+            </div>
+        </form>
+    </body>
+</html>

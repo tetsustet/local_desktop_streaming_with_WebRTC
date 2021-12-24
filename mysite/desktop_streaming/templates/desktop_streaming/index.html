@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" type="text/css" href="{% static 'desktop_streaming/css/base.css' %}">
+        
+        <title>Desktop Streaming</title>
+    </head>
+    <body>
+        <form class="box">
+            <div class="title has-text-centered">
+                <span class="is-inline-block">ストリーミングに参加</span>
+            </div>
+            <div class="field">
+                <label class="label">部屋ID</label>
+                <div class="control">
+                  <input class="input" type="text" placeholder="room number">
+                </div>
+            </div>
+            <div class="has-text-right">
+                <button id="join_button" class="button is-link" type="button">参加</button>
+            </div>
+        </form>
+    </body>
+</html>
