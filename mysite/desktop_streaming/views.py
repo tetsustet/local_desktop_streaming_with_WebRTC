@@ -28,11 +28,11 @@ class RoomsViewSet(viewsets.ModelViewSet):
         return HttpResponse(room_id + organizer_uuid)
 
 def organizer(request, room_id):
-    return HttpResponse("This is organizer's page")
+    return render(request, "desktop_streaming/organizer.html", None)
 
 def participant(request, room_id):
-    return HttpResponse("This is participant's page")
-
+    return render(request, "desktop_streaming/participant.html", None)
+    
 def create_room(request):
     return render(request, "desktop_streaming/create_room.html", None)
 

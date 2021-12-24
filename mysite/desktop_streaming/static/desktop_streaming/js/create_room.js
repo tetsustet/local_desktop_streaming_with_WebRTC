@@ -4,12 +4,20 @@ console.log("create_room.js is loaded");
 $(window).on("load", function() {
     console.log("window on load function");
     init();
-})
+});
 
 function init() {
     $("#join_button").on("click", function(e){
+        if($("#room_id").val()==""){
+            console.log("show danger message");
+            $("#room_id").next().text("部屋IDは必須です")
+                                .removeClass("is-hidden");
+            return
+        }else{
+            console.log("hide danger message");
+            $("#room_id").next().addClass("is-hidden");
+        }
         let roomId = $("#room_id").val();
-        console.log(`../api/rooms/${roomId}`);
         //問い合わせて
         fetch(`../api/rooms/${roomId}`,{
             method: 'GET',
@@ -20,12 +28,18 @@ function init() {
                                     .removeClass("is-hidden");
             }else if(response.status == 404){
                 //なければ作成して配信ページへ移動
-                let uuid = UUID.generate();
-                Cookies.set('uuid', uuid);
+                let uuid = Cookies.get('uuid'); 
+                
+                if(!uuid){
+                    uuid = UUID.generate();
+                    Cookies.set('uuid', uuid);
+                    alert("UUID is updated");
+                }
                 let data ={
                     room_id: roomId,
                     organizer_uuid: uuid
                 }
+                console.log("POST");
                 fetch(`../api/rooms/`,{
                     method: 'POST',
                     credentials: 'same-origin',
@@ -37,6 +51,7 @@ function init() {
                     body: JSON.stringify(data)    
                 }).then(function(){
                     console.log("create streaming page");
+                    window.location.href = `../rooms/${roomId}/organizer/`
                 });
 
             }
@@ -47,12 +62,12 @@ function init() {
         console.log("roomId on change function");
         if($(this).val()==""){
             console.log("show danger message");
-            $(this).next().removeClass("is-hidden");
+            $(this).next().text("部屋IDは必須です")
+                          .removeClass("is-hidden");
 
         }else{
             console.log("hide danger message");
-            $(this).next().text("部屋IDは必須です")
-                .addClass("is-hidden");
+            $(this).next().addClass("is-hidden");
         }
      })
 }
