@@ -1,10 +1,12 @@
 from datetime import time
+
+from django.core import serializers
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 from django.utils import timezone
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 
 from .models import Offer, Room
@@ -40,10 +42,17 @@ class OffersViewSet(viewsets.ModelViewSet):
         print(participant_uuid)
         print(timezone.now())
         print(Offer.objects.filter(room_id=room_id).exists())
-        #if (Room.objects.filter(room_id=room_id).exists()):
-        #    return Response("a", status=status.HTTP_409_CONFLICT)
         Offer.objects.create(room_id=room_id, participant_uuid=participant_uuid, offer_sdp=offer_sdp)
         return HttpResponse(participant_uuid + offer_sdp)
+
+    def list(self, request):
+        print(request.query_params.get('room_id'))
+        #offer = Offer.objects.get(room_id = request.query_params.get('room_id'))
+        #print(str(offer))
+        offers = Offer.objects.filter(room_id = request.query_params.get('room_id'), is_solved=request.query_params.get('is_solved')).values()
+        print(offers)
+        return Response(offers, status=status.HTTP_200_OK)
+
 
 
 def organizer(request, room_id):
