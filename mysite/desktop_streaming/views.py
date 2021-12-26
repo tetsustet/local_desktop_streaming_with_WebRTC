@@ -9,8 +9,8 @@ from django.utils import timezone
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 
-from .models import Offer, Room
-from .serializer import RoomsSerializer, OffersSerializer
+from .models import Answer, Offer, Room
+from .serializer import RoomsSerializer, OffersSerializer, AnswersSerializer
 
 class RoomsViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.all()
@@ -32,7 +32,12 @@ class RoomsViewSet(viewsets.ModelViewSet):
 class OffersViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.all()
     serializer_class = OffersSerializer
-    lookup_field = "room_id"
+    lookup_field = "id"
+
+    def list(self, request):
+        offers = Offer.objects.filter(room_id = request.query_params.get('room_id'), is_solved=request.query_params.get('is_solved')).values()
+        print(offers)
+        return Response(offers, status=status.HTTP_200_OK)
 
     def create(self, request):
         room_id = Room.objects.get(room_id = request.data.get('room_id'))
@@ -45,15 +50,15 @@ class OffersViewSet(viewsets.ModelViewSet):
         Offer.objects.create(room_id=room_id, participant_uuid=participant_uuid, offer_sdp=offer_sdp)
         return HttpResponse(participant_uuid + offer_sdp)
 
+class AnswersViewSet(viewsets.ModelViewSet):
+    queryset = Answer.objects.all()
+    serializer_class = AnswersSerializer
+    lookup_field = "id"
+
     def list(self, request):
-        print(request.query_params.get('room_id'))
-        #offer = Offer.objects.get(room_id = request.query_params.get('room_id'))
-        #print(str(offer))
-        offers = Offer.objects.filter(room_id = request.query_params.get('room_id'), is_solved=request.query_params.get('is_solved')).values()
-        print(offers)
-        return Response(offers, status=status.HTTP_200_OK)
-
-
+        answers = Answer.objects.filter(participant_uuid = request.query_params.get('participant_uuid'), is_solved=request.query_params.get('is_solved')).values()
+        print(answers)
+        return Response(answers, status=status.HTTP_200_OK)
 
 def organizer(request, room_id):
     return render(request, "desktop_streaming/organizer.html", None)

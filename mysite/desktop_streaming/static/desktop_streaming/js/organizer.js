@@ -11,7 +11,7 @@ $(window).on("load", function() {
 
 function init(){
     $("#share_desktop").on("click", getDesktopStream);
-    timer = setInterval(checkOffer,10000);
+    timer = setInterval(checkOffer,3000);
 }
 
 async function checkOffer(){
@@ -32,9 +32,45 @@ async function checkOffer(){
         await connection.setRemoteDescription(new RTCSessionDescription({type:'offer', sdp:data[i].offer_sdp}));
         let answer = await connection.createAnswer();
         await connection.setLocalDescription(answer);
+        await submitAnswer(answer, data[i].participant_uuid);
         console.log(`Answer from pc2:\n${answer.sdp}`);
         connections.push(connection);
+
+        //answer送ったらofferは消しておく
+        await fetch(`../../../api/offers/${data[i].id}/`,{
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+                'X-CSRFToken': Cookies.get('csrftoken')
+            },
+        });
+        
     }
+}
+
+function submitAnswer(answer, participant_uuid){
+    return new Promise(function(resolve){
+        let data ={
+            room_id: getRoomId(),
+            participant_uuid: participant_uuid,
+            answer_sdp: answer.sdp,
+        }
+        fetch(`../../../api/answers/`,{
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+                'X-CSRFToken': Cookies.get('csrftoken')
+            },
+            body: JSON.stringify(data)    
+        }).then(function(){
+            console.log("submitAnswer");
+            //offer返してるけど呼び出し元では使ってない
+            resolve(answer);
+        });
+    });
 }
 
 async function getDesktopStream(){
