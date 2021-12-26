@@ -16,13 +16,13 @@ class Room(models.Model):
 class Offer(models.Model):
     room_id = models.ForeignKey(Room, to_field="room_id", on_delete=CASCADE)
     participant_uuid = models.UUIDField()
-    offer_sdp = models.CharField(max_length=1000)
+    offer_sdp = models.TextField(max_length=1000)
     is_solved = models.BooleanField(default=False)
 
 class Answer(models.Model):
     room_id = models.ForeignKey(Room, to_field="room_id", on_delete=CASCADE)
     participant_uuid = models.UUIDField()
-    offer_sdp = models.CharField(max_length=1000)
+    answer_sdp = models.TextField(max_length=1000)
     is_solved = models.BooleanField(default=False)
 
 

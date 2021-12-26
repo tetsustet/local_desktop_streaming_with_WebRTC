@@ -7,8 +7,8 @@ from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from .models import Room
-from .serializer import RoomsSerializer
+from .models import Offer, Room
+from .serializer import RoomsSerializer, OffersSerializer
 
 class RoomsViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.all()
@@ -27,12 +27,31 @@ class RoomsViewSet(viewsets.ModelViewSet):
         Room.objects.create(room_id=room_id, organizer_uuid=organizer_uuid, last_accessed_datetime=timezone.now())
         return HttpResponse(room_id + organizer_uuid)
 
+class OffersViewSet(viewsets.ModelViewSet):
+    queryset = Offer.objects.all()
+    serializer_class = OffersSerializer
+    lookup_field = "room_id"
+
+    def create(self, request):
+        room_id = Room.objects.get(room_id = request.data.get('room_id'))
+        participant_uuid = request.data.get('participant_uuid')
+        offer_sdp = request.data.get('offer_sdp')
+        print(room_id)
+        print(participant_uuid)
+        print(timezone.now())
+        print(Offer.objects.filter(room_id=room_id).exists())
+        #if (Room.objects.filter(room_id=room_id).exists()):
+        #    return Response("a", status=status.HTTP_409_CONFLICT)
+        Offer.objects.create(room_id=room_id, participant_uuid=participant_uuid, offer_sdp=offer_sdp)
+        return HttpResponse(participant_uuid + offer_sdp)
+
+
 def organizer(request, room_id):
     return render(request, "desktop_streaming/organizer.html", None)
 
 def participant(request, room_id):
     return render(request, "desktop_streaming/participant.html", None)
-    
+
 def create_room(request):
     return render(request, "desktop_streaming/create_room.html", None)
 

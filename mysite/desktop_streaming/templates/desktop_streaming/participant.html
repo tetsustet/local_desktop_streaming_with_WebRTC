@@ -1,8 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
+<!--https://developer.mozilla.org/ja/docs/Web/API/WebRTC_API/Connectivity-->
 <html>
     <head>
         <title>視聴ページ:Desktop Streaming</title>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.js"></script>
+        <script src="{% static 'desktop_streaming/js/participant.js' %}"></script>
     </head>
     <body>
         this is the participant's page
