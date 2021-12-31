@@ -4,12 +4,15 @@
 <html>
     <head>
         <title>視聴ページ:Desktop Streaming</title>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" type="text/css" href="{% static 'desktop_streaming/css/participant.css' %}">
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.js"></script>
+        <script src="{% static 'desktop_streaming/js/common.js' %}"></script>
         <script src="{% static 'desktop_streaming/js/participant.js' %}"></script>
     </head>
     <body>
-        this is the participant's page
+        <video id="remote_desktop" autoplay></video>
     </body>
 </html>

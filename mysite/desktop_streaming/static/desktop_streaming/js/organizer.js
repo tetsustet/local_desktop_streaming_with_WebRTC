@@ -2,6 +2,8 @@
 
 let timer;
 let connections = new Array();
+let currentStream;
+let sharingState; //"sharing", "not-sharing"
 
 console.log("create_room.js is loaded");
 $(window).on("load", function() {
@@ -11,11 +13,13 @@ $(window).on("load", function() {
 
 function init(){
     $("#share_desktop").on("click", getDesktopStream);
-    timer = setInterval(checkOffer,3000);
+    currentStream = WebRTCConnection.getFakeStream(new AudioContext());
 }
 
+//あとでoffer listnerとして commonに出す
 async function checkOffer(){
-    let response = await fetch(`../../../api/offers/?${new URLSearchParams({room_id: getRoomId(), is_solved:"False"})}`,{
+    // console.log("waitOffer()");
+    let response = await fetch(`../../../api/sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`,{
         method: 'GET',
         credentials: 'same-origin',
         headers: {
@@ -23,21 +27,20 @@ async function checkOffer(){
             'X-CSRFToken': Cookies.get('csrftoken')
         },
     });
+
     //ここを見ながら書いた https://github.com/webrtc/samples/blob/gh-pages/src/content/peerconnection/pc1/js/main.js
     let data = await response.json();
-    console.log(data);
+    if(data.length != 0)console.log(data);
     for(let i = 0; i < data.length; i++){
-        let connection = new RTCPeerConnection();
-        console.log(data[i].offer_sdp);
-        await connection.setRemoteDescription(new RTCSessionDescription({type:'offer', sdp:data[i].offer_sdp}));
-        let answer = await connection.createAnswer();
-        await connection.setLocalDescription(answer);
-        await submitAnswer(answer, data[i].participant_uuid);
-        console.log(`Answer from pc2:\n${answer.sdp}`);
+        let connection = await WebRTCConnection.acceptConnection(data[i].from_uuid, data[i].sdp_text, "vannilaICE");
+        let localStream = WebRTCConnection.getFakeStream(new AudioContext());
+        connection.setStreams(currentStream);
+        console.log(`connect()`);
+        connection.connect();
         connections.push(connection);
-
+    
         //answer送ったらofferは消しておく
-        await fetch(`../../../api/offers/${data[i].id}/`,{
+        await fetch(`../../../api/sdp/${data[i].id}/`,{
             method: 'DELETE',
             credentials: 'same-origin',
             headers: {
@@ -45,32 +48,7 @@ async function checkOffer(){
                 'X-CSRFToken': Cookies.get('csrftoken')
             },
         });
-        
     }
-}
-
-function submitAnswer(answer, participant_uuid){
-    return new Promise(function(resolve){
-        let data ={
-            room_id: getRoomId(),
-            participant_uuid: participant_uuid,
-            answer_sdp: answer.sdp,
-        }
-        fetch(`../../../api/answers/`,{
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
-                'X-CSRFToken': Cookies.get('csrftoken')
-            },
-            body: JSON.stringify(data)    
-        }).then(function(){
-            console.log("submitAnswer");
-            //offer返してるけど呼び出し元では使ってない
-            resolve(answer);
-        });
-    });
 }
 
 async function getDesktopStream(){
@@ -79,13 +57,7 @@ async function getDesktopStream(){
     let stream = await navigator.mediaDevices.getDisplayMedia({video: true})
     // streamをvideoにつなげる
     video.srcObject = stream;
+    timer = setInterval(checkOffer,3000);
+    currentStream = stream;
     return stream;
-}
-
-function getRoomId(){
-    let splitted = decodeURI(location.href).split("/");
-    let idx = splitted.findIndex(function(e){
-        return e == "rooms";
-    });
-    return splitted[idx + 1];
 }

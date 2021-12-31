@@ -13,16 +13,9 @@ class Room(models.Model):
     # 最終アクセスからしばらくしたら消す．
     last_accessed_datetime = models.DateTimeField()
 
-class Offer(models.Model):
+class Sdp(models.Model):
     room_id = models.ForeignKey(Room, to_field="room_id", on_delete=CASCADE)
-    participant_uuid = models.UUIDField()
-    offer_sdp = models.TextField(max_length=1000)
+    from_uuid = models.UUIDField()
+    to_uuid = models.UUIDField()
+    sdp_text = models.TextField(max_length=10000) 
     is_solved = models.BooleanField(default=False)
-
-class Answer(models.Model):
-    room_id = models.ForeignKey(Room, to_field="room_id", on_delete=CASCADE)
-    participant_uuid = models.UUIDField()
-    answer_sdp = models.TextField(max_length=1000)
-    is_solved = models.BooleanField(default=False)
-
-

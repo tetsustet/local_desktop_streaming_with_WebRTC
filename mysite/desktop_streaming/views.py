@@ -9,8 +9,8 @@ from django.utils import timezone
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 
-from .models import Answer, Offer, Room
-from .serializer import RoomsSerializer, OffersSerializer, AnswersSerializer
+from .models import Room, Sdp
+from .serializer import RoomsSerializer, SdpSerializer
 
 class RoomsViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.all()
@@ -29,36 +29,22 @@ class RoomsViewSet(viewsets.ModelViewSet):
         Room.objects.create(room_id=room_id, organizer_uuid=organizer_uuid, last_accessed_datetime=timezone.now())
         return HttpResponse(room_id + organizer_uuid)
 
-class OffersViewSet(viewsets.ModelViewSet):
-    queryset = Offer.objects.all()
-    serializer_class = OffersSerializer
+class SdpViewSet(viewsets.ModelViewSet):
+    queryset = Sdp.objects.all()
+    serializer_class = SdpSerializer
     lookup_field = "id"
 
     def list(self, request):
-        offers = Offer.objects.filter(room_id = request.query_params.get('room_id'), is_solved=request.query_params.get('is_solved')).values()
-        print(offers)
-        return Response(offers, status=status.HTTP_200_OK)
+        sdp = Sdp.objects.filter(to_uuid = request.query_params.get('to_uuid'), is_solved=request.query_params.get('is_solved')).values()
+        return Response(sdp, status=status.HTTP_200_OK)
 
     def create(self, request):
         room_id = Room.objects.get(room_id = request.data.get('room_id'))
-        participant_uuid = request.data.get('participant_uuid')
-        offer_sdp = request.data.get('offer_sdp')
-        print(room_id)
-        print(participant_uuid)
-        print(timezone.now())
-        print(Offer.objects.filter(room_id=room_id).exists())
-        Offer.objects.create(room_id=room_id, participant_uuid=participant_uuid, offer_sdp=offer_sdp)
-        return HttpResponse(participant_uuid + offer_sdp)
-
-class AnswersViewSet(viewsets.ModelViewSet):
-    queryset = Answer.objects.all()
-    serializer_class = AnswersSerializer
-    lookup_field = "id"
-
-    def list(self, request):
-        answers = Answer.objects.filter(participant_uuid = request.query_params.get('participant_uuid'), is_solved=request.query_params.get('is_solved')).values()
-        print(answers)
-        return Response(answers, status=status.HTTP_200_OK)
+        from_uuid = request.data.get('from_uuid')
+        to_uuid = request.data.get('to_uuid')
+        sdp_text = request.data.get('sdp_text')
+        Sdp.objects.create(room_id=room_id, from_uuid=from_uuid, to_uuid=to_uuid, sdp_text=sdp_text)
+        return HttpResponse(from_uuid + sdp_text)
 
 def organizer(request, room_id):
     return render(request, "desktop_streaming/organizer.html", None)

@@ -1,19 +1,13 @@
 from rest_framework import serializers
 
-from .models import Answer, Room, Offer
+from .models import Room, Sdp
 
 class RoomsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = ["room_id", "organizer_uuid"]
         
-class OffersSerializer(serializers.ModelSerializer):
+class SdpSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Offer
-        fields = ["room_id", "participant_uuid", "offer_sdp", "is_solved"]
-
-class AnswersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Answer
-        fields = ["room_id", "participant_uuid", "answer_sdp", "is_solved"]
-        
+        model = Sdp
+        fields = ["room_id", "from_uuid", "to_uuid",  "sdp_text", "is_solved"]        
