@@ -1,6 +1,7 @@
 # local_desktop_streaming_with_WebRTC
 ## 必要なパッケージ
-django
+* django = "4.0"
+* djangorestframework = "3.13"
 ## インストール方法
 pipenvとpyenvをインストール  
 pipfileのあるディレクトリに移動  
@@ -9,10 +10,30 @@ pipfileのあるディレクトリに移動
 $ pipenv install
 ```
 ## 実行方法
+### まずdjangoのサーバーを立ち上げる
 ```
 $ pipenv shell
 $ python mysite/manage.py runserver
 ```
+### 配信者
+http://localhost:8000/desktop-streaming/create-room/ にアクセス
+![create room img](/img/create_room.png) 
+部屋idを入力して作成をクリックする．
+### 視聴者
+http://localhost:8000/desktop-streaming/ にアクセス
+![join img](/img/join.png) 
+参加したい部屋idを入力して参加する．
+### 画面共有する
+画面を共有をクリック  
+![click share desktop button](/img/share1.png)  
+共有する画面を選択し，共有をクリック  
+![choose  desktop and click share button](/img/share2.png)  
+共有が開始される  
+![sharing desktop begin](/img/share3.png)  
+共有を停止する場合は赤い共有を停止ボタンをクリック
+![push red button to stop desktop begin](/img/share4.png)  
+![a after stop sharing screen shot ](/img/share5.png)  
+
 
 ## メモ
 Firefox以外はhttpだとlocalHostでないとgetUserMediaができないらしい．  
