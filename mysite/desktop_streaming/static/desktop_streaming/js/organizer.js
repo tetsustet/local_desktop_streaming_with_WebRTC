@@ -3,6 +3,8 @@
 let timer;
 let connections = new Array();
 let currentStream;
+let defaultStream;
+let desktopStream;
 let sharingState; //"sharing", "not-sharing"
 
 console.log("create_room.js is loaded");
@@ -12,8 +14,11 @@ $(window).on("load", function() {
 })
 
 function init(){
-    $("#share_desktop").on("click", getDesktopStream);
-    currentStream = WebRTCConnection.getFakeStream(new AudioContext());
+    $("#share_desktop").on("click", shareDesktopButton);
+    sharingState = "non-sharing";
+    defaultStream = WebRTCConnection.getFakeStream(new AudioContext());
+    currentStream = defaultStream;
+    timer = setInterval(checkOffer,3000);
 }
 
 //あとでoffer listnerとして commonに出す
@@ -34,9 +39,11 @@ async function checkOffer(){
     for(let i = 0; i < data.length; i++){
         let connection = await WebRTCConnection.acceptConnection(data[i].from_uuid, data[i].sdp_text, "vannilaICE");
         let localStream = WebRTCConnection.getFakeStream(new AudioContext());
-        connection.setStreams(currentStream);
         console.log(`connect()`);
         connection.connect();
+        connection.onready = function(){
+            connection.setStreams(currentStream);
+        }
         connections.push(connection);
     
         //answer送ったらofferは消しておく
@@ -51,13 +58,43 @@ async function checkOffer(){
     }
 }
 
-async function getDesktopStream(){
-    console.log("getDesktopStream()");
-    let video = $("#desktop").get(0);
-    let stream = await navigator.mediaDevices.getDisplayMedia({video: true})
-    // streamをvideoにつなげる
-    video.srcObject = stream;
-    timer = setInterval(checkOffer,3000);
-    currentStream = stream;
-    return stream;
+async function shareDesktopButton(){
+    console.log("shareDesktopButton()");
+    if(sharingState == "non-sharing"){
+        let video = $("#main_view").get(0);
+        try{
+            let stream = await navigator.mediaDevices.getDisplayMedia({video: true});
+            // streamをvideoにつなげる
+            stream.addEventListener("onremovetrack", removeDesktop, stream);
+            video.srcObject = stream;
+            desktopStream = stream;
+            currentStream = stream;
+            $("#share_desktop").removeClass("is-link")
+                            .addClass("is-danger")
+                            .text("共有を停止");
+            sharingState = "sharing"
+            connections.forEach(connection => {
+                connection.setStreams(desktopStream);
+            });
+            return stream;
+        }catch(e){
+            
+        }
+    }else{    
+        currentStream = defaultStream;
+        connections.forEach(connection => {
+            connection.setStreams(defaultStream);
+        });
+        $("#share_desktop").removeClass("is-danger")
+                           .addClass("is-link")
+                           .text("画面を共有");
+        sharingState = "non-sharing"
+    }
+}
+
+function removeDesktop(stream){
+    $("#share_desktop").removeClass("is-danger")
+    .addClass("is-link")
+    .text("画面を共有");
+    sharingState = "non-sharing"
 }

@@ -14,12 +14,14 @@ async function init(){
     room = await getRoomDetail();
     console.log(room);
     let connection = new WebRTCConnection(room.organizer_uuid, "Offer", "vannilaICE");
-    let localStream = WebRTCConnection.getFakeStream(new AudioContext());
-    connection.setStreams(localStream);
+    //let localStream = WebRTCConnection.getFakeStream(new AudioContext());
+    //connection.setStreams(localStream);
+    connection.createMessagingChannel();
+    console.log("connect!");
     connection.connect();
-    connection.connection.ontrack = function(event) {
-        console.log("ontrack");
-        document.getElementById("remote_desktop").srcObject = event.streams[0];
+    connection.connection.ontrack = function(e) {
+        console.log("ontrack\n%o",e);
+        document.getElementById("remote_desktop").srcObject = e.streams[0];
         //document.getElementById("hangup-button").disabled = false;
     };
     connections.push(connection);

@@ -1,0 +1,35 @@
+body{
+    background-color:aliceblue;
+    height: 100vh;
+    width: 100vw ;
+}
+
+#main_view_wrapper{
+    height: 100%;
+    width: 100%;
+
+    background-color: black;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#menu_wrapper{
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    width: 100vw;
+    justify-content: center;
+}
+
+#menu{
+    display: flex;
+    opacity: 0.2;
+
+    gap:20px;
+}
+
+#menu:hover {
+    opacity: 1.0;
+}

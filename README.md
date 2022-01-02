@@ -15,4 +15,4 @@ $ python mysite/manage.py runserver
 ```
 
 ## メモ
-httpだとgetUserMediaできないらしい(Chrome)
+Firefox以外はhttpだとlocalHostでないとgetUserMediaができないらしい．  

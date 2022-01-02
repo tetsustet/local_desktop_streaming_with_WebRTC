@@ -1,18 +1,48 @@
 "use strict"
 
+// 参考になった資料
+// ・ネゴシエーション
+// https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling#starting_negotiation
+// ・DataChannelを用いたSDPの交換
+// https://qiita.com/massie_g/items/1316eb8c6e0d171307f5
+
 class WebRTCConnection{
     isOffer;
     connection;
     #checkInterval = 5000;
     targetUUID;
     timer;
-    senders = {video:null, audio:null};
+    //senders = {video:null, audio:null};
+
+    onready = null;
+
+    messagingChannel;
     
     constructor(targetUUID, type, icetype){
+        let thisObj = this;
         this.targetUUID = targetUUID;
         this.isOffer = type == "Offer"? true : false;
         this.icetype = icetype;
         this.connection = new RTCPeerConnection();
+        this.messagingChannel = null;
+
+        this.connection.ondatachannel = function(e){
+            console.log("ondetachannel\n%o",e);
+            thisObj.messagingChannel=e.channel;
+            WebRTCConnection.setupDataChannel(thisObj, e.channel);
+        }
+        this.connection.onnegotiationneeded = function(e){
+            console.log("onnegotiationneeded\n%o",e);
+            if(!thisObj.messagingChannel  || thisObj.connection.connectionState != "connected"){
+                console.log("no messagingChannel or state is not connected\n%o", thisObj);
+                return;
+            }
+            thisObj.handleNegotiationNeededEvent(e);
+        }
+        this.connection.onconnectionstatechange = function(e) {
+            console.log("connection state updated:%s", thisObj.connection.connectionState);
+        }
+
         if (this.icetype == "vannilaICE"){
             this.connection.addEventListener('icecandidate', e => this.vanillaOnICEcandidate(this.connection, e))
         };
@@ -30,6 +60,61 @@ class WebRTCConnection{
             console.log(connection);
             resolve(connection);
         });
+    }
+
+    static setupDataChannel(connection, channel){
+        console.log("setupDataChannel label:%s",channel.label);
+        channel.onerror = function(error) {
+            console.log('onerror:', error);
+        };
+        channel.onopen = function(evt) {
+            console.log('onopen:', evt);
+        };
+        channel.onclose = function() {
+            console.log('onclose.');
+        };
+        if(channel.label == "messagingDataChannel"){
+            console.log()
+            channel.onmessage = async function(evt) {
+                console.log('onmessage:\n %o ', evt);
+                console.log(channel);
+                const msg = JSON.parse(evt.data);
+                if(msg.type == "sdp"){
+                    const sdp = msg.content;
+                    console.log(msg.content);
+                    await connection.connection.setRemoteDescription(msg.content);
+                    if(msg.content.type =="offer"){
+                        const sdp = await connection.connection.createAnswer();
+                        await connection.connection.setLocalDescription(sdp);
+                        connection.sendSdpViaMessagingChannel(sdp);
+                    }
+                }
+            };
+            channel.onopen = function(evt) {
+                console.log('onopen:', evt);
+                if(connection.onready){
+                    console.log("onready");
+                    connection.onready();
+                }
+            };
+        }
+        console.log("setupDataChannel()");
+    }
+
+    async handleNegotiationNeededEvent(e){
+        console.log(this);
+        let offer = await this.connection.createOffer();
+        this.connection.setLocalDescription(offer);
+        this.sendSdpViaMessagingChannel(offer);
+    }
+
+    sendSdpViaMessagingChannel(sdp){
+        console.log("sendSdpViaMessagingChannel()\n%o",sdp);
+        this.sendMessage("sdp", sdp);
+    }
+
+    sendMessage(type, obj){
+        this.messagingChannel.send(JSON.stringify({type:type, content:obj}));
     }
 
     async checkAnswer(connection){
@@ -65,7 +150,9 @@ class WebRTCConnection{
     
     connect(){
         if(this.icetype == "vannilaICE"){
+            console.log("connect()");
             this.vanillaICEConnection();
+            console.log("connect()_end");
         }
     }
 
@@ -75,7 +162,27 @@ class WebRTCConnection{
     }
     
     setStreams(streams) {
-        streams.getTracks().forEach(track => this.connection.addTrack(track, streams));
+        console.log("setStreams()");
+        this.connection.getSenders().forEach(sender => {
+            console.log("removed\n%o",sender);
+            this.connection.removeTrack(sender);
+        });
+        streams.getTracks().forEach(track => {
+            console.log("added\n%o",track);
+            this.connection.addTrack(track, streams);
+        });
+        this.connection.getSenders().forEach(sender => {
+            console.log("new sender\n%o",sender);
+        });
+    }
+
+    createMessagingChannel(){
+        if(this.messagingChannel){
+            console.error("messaging channel is already exist");
+        }
+        this.messagingChannel =  this.connection.createDataChannel("messagingDataChannel");
+        console.log(this.messagingChannel);
+        WebRTCConnection.setupDataChannel(this, this.messagingChannel);
     }
 
     vanillaOnICEcandidate(connection, e){
@@ -169,7 +276,7 @@ class WebRTCConnection{
         });
     }
 
-    // ダミーのMediaStreamを生成する
+// ダミーのMediaStreamを生成する
 // 参照: https://lealog.hateblo.jp/entry/2018/02/19/160808
     static getFakeStream(ctx) {
         const $canvas = document.createElement('canvas');

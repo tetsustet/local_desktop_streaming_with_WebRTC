@@ -4,6 +4,7 @@
     <head>
         <title>配信ページ:Desktop Streaming</title>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" type="text/css" href="{% static 'desktop_streaming/css/organizer.css' %}">
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.js"></script>
@@ -11,8 +12,17 @@
         <script src="{% static 'desktop_streaming/js/organizer.js' %}"></script>
     </head>
     <body>
-        this is the organizer's page
-        <video id="desktop" autoplay></video>
-        <button id="share_desktop" class="button is-link" type="button">画面を共有</button>
+        <div style="position: absolute;">this is the organizer's page</div>
+        <div id="main_view_wrapper">
+            <video id="main_view" autoplay></video>
+        </div>
+        <div id="menu_wrapper">
+            <div id="menu" class="box">
+                <button id="share_desktop" class="button is-link" type="button">画面を共有</button>
+                <button id="set_default_img" class="button is-link" type="button">デフォルト画像を設定</button>
+            </div>
+        </div>
+        
+        <div id="participants"></div>
     </body>
 </html>
