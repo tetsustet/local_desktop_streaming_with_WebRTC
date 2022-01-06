@@ -32,7 +32,8 @@ class WebRTCConnection{
             WebRTCConnection.setupDataChannel(thisObj, e.channel);
         }
         this.connection.onnegotiationneeded = function(e){
-            console.log("onnegotiationneeded\n%o",e);
+            console.log("onnegotiationneeded");
+            //console.log("onnegotiationneeded\n%o",e);
             if(!thisObj.messagingChannel  || thisObj.connection.connectionState != "connected"){
                 console.log("no messagingChannel or state is not connected\n%o", thisObj);
                 return;
@@ -41,6 +42,9 @@ class WebRTCConnection{
         }
         this.connection.onconnectionstatechange = function(e) {
             console.log("connection state updated:%s", thisObj.connection.connectionState);
+        }
+        this.connection.oniceconnectionstatechange = function(e){
+            console.log("ice connection state updated:%s", thisObj.connection.iceConnectionState);
         }
 
         if (this.icetype == "vannilaICE"){
@@ -74,7 +78,6 @@ class WebRTCConnection{
             console.log('onclose.');
         };
         if(channel.label == "messagingDataChannel"){
-            console.log()
             channel.onmessage = async function(evt) {
                 console.log('onmessage:\n %o ', evt);
                 console.log(channel);
@@ -102,7 +105,7 @@ class WebRTCConnection{
     }
 
     async handleNegotiationNeededEvent(e){
-        console.log(this);
+        console.log("handleNegotiationNeededEvent()");
         let offer = await this.connection.createOffer();
         this.connection.setLocalDescription(offer);
         this.sendSdpViaMessagingChannel(offer);
@@ -118,7 +121,7 @@ class WebRTCConnection{
     }
 
     async checkAnswer(connection){
-        // console.log("waitOffer()");
+        console.log("checkAnswer()");
         let response = await fetch(`../../../api/sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`,{
             method: 'GET',
             credentials: 'same-origin',
@@ -152,7 +155,6 @@ class WebRTCConnection{
         if(this.icetype == "vannilaICE"){
             console.log("connect()");
             this.vanillaICEConnection();
-            console.log("connect()_end");
         }
     }
 
@@ -162,6 +164,7 @@ class WebRTCConnection{
     }
     
     setStreams(streams) {
+        //TODO: replaceTrackを使う
         console.log("setStreams()");
         this.connection.getSenders().forEach(sender => {
             console.log("removed\n%o",sender);
@@ -215,6 +218,7 @@ class WebRTCConnection{
     submitAnswer(sdp){
         let connection = this;
         return new Promise(function(resolve){
+            console.log("submitAnswer()");
             let uuid = Cookies.get('uuid'); 
             if(!uuid){
                 uuid = UUID.generate();
@@ -237,7 +241,7 @@ class WebRTCConnection{
                 },
                 body: JSON.stringify(data)    
             }).then(function(){
-                console.log("submitAnswer");
+                
                 //offer返してるけど呼び出し元では使ってない
                 resolve(sdp);
             });
@@ -246,7 +250,9 @@ class WebRTCConnection{
     }
 
     submitOffer(sdp){
+        let connection = this;
         return new Promise(function(resolve){
+            console.log("submitOffer");
             let uuid = Cookies.get('uuid'); 
             if(!uuid){
                 uuid = UUID.generate();
@@ -256,7 +262,7 @@ class WebRTCConnection{
             let data ={
                 room_id: getRoomId(),
                 from_uuid: uuid,
-                to_uuid: room.organizer_uuid,
+                to_uuid: connection.targetUUID,
                 sdp_text: sdp.sdp,
             }
             fetch(`../../../api/sdp/`,{
@@ -269,7 +275,6 @@ class WebRTCConnection{
                 },
                 body: JSON.stringify(data)    
             }).then(function(){
-                console.log("submitOffer");
                 //offer返してるけど呼び出し元では使ってない
                 resolve(sdp);
             });

@@ -1,11 +1,15 @@
 "use strict"
 
 let timer;
+let canvasTimer;
 let connections = new Array();
 let currentStream;
 let defaultStream;
 let desktopStream;
-let sharingState; //"sharing", "not-sharing"
+let defaultImg;
+let canvas;
+let ctx;
+let sharingState; //"sharing", "not-sharing";
 
 console.log("create_room.js is loaded");
 $(window).on("load", function() {
@@ -14,11 +18,49 @@ $(window).on("load", function() {
 })
 
 function init(){
+    console.log("init()");
     $("#share_desktop").on("click", shareDesktopButton);
+    $("#set_default_img").on("click", setDafaultImgButton);
+    
+    canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+    defaultStream = canvas.captureStream(30);
+    currentStream = defaultStream;   
+    $("#main_view").get(0).srcObject = currentStream;
+    //$(canvas).appendTo("body");
+    ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
+    
     sharingState = "non-sharing";
-    defaultStream = WebRTCConnection.getFakeStream(new AudioContext());
-    currentStream = defaultStream;
+    setTimeout(function(){
+        console.log("setStream");
+        //CanvasのStreamは先に開いてから描画しないとだめっぽい．
+        //表示したいcanvasを予め作っておいて，送信用のcanvasにコピーするのが良いか
+        //defaultStream = canvas.captureStream(30);
+        currentStream = defaultStream;    
+        $("#main_view").get(0).srcObject = currentStream;
+        setTimeout(function(){
+            canvasDraw();
+        },1000);
+    },1000);
     timer = setInterval(checkOffer,3000);
+    canvasTimer = setInterval(canvasDraw, 100);
+}
+
+function canvasDraw(){
+    //
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
 }
 
 //あとでoffer listnerとして commonに出す
@@ -58,38 +100,47 @@ async function checkOffer(){
     }
 }
 
-async function shareDesktopButton(){
+function shareDesktopButton(){
     console.log("shareDesktopButton()");
     if(sharingState == "non-sharing"){
-        let video = $("#main_view").get(0);
-        try{
-            let stream = await navigator.mediaDevices.getDisplayMedia({video: true});
-            // streamをvideoにつなげる
-            stream.addEventListener("onremovetrack", removeDesktop, stream);
-            video.srcObject = stream;
-            desktopStream = stream;
-            currentStream = stream;
-            $("#share_desktop").removeClass("is-link")
-                            .addClass("is-danger")
-                            .text("共有を停止");
-            sharingState = "sharing"
-            connections.forEach(connection => {
-                connection.setStreams(desktopStream);
-            });
-            return stream;
-        }catch(e){
-            
-        }
+        startDesktopSharing();
     }else{    
-        currentStream = defaultStream;
-        connections.forEach(connection => {
-            connection.setStreams(defaultStream);
-        });
-        $("#share_desktop").removeClass("is-danger")
-                           .addClass("is-link")
-                           .text("画面を共有");
-        sharingState = "non-sharing"
+        stopDesktopSharing();
     }
+}
+
+async function startDesktopSharing(){
+        let stream = await navigator.mediaDevices.getDisplayMedia({video: true});
+        // streamをvideoにつなげる
+        stream.addEventListener("onremovetrack", removeDesktop, stream);
+        desktopStream = stream;
+        currentStream = stream;
+        stream.getTracks()[0].onended = stopDesktopSharing;
+        //video.srcObject = currentStream;
+        $("#share_desktop").removeClass("is-link")
+                        .addClass("is-danger")
+                        .text("共有を停止");
+        sharingState = "sharing"
+        connections.forEach(connection => {
+            connection.setStreams(currentStream);
+        });
+        $("#main_view").get(0).srcObject = currentStream;
+        return stream;
+}
+
+function stopDesktopSharing(){
+    currentStream = defaultStream;
+    connections.forEach(connection => {
+        connection.setStreams(currentStream);
+    });
+    $("#main_view").get(0).srcObject = currentStream;
+    $("#share_desktop").removeClass("is-danger")
+                       .addClass("is-link")
+                       .text("画面を共有");
+    desktopStream.getTracks().forEach(function(track) {
+        track.stop();
+    });                   
+    sharingState = "non-sharing"
 }
 
 function removeDesktop(stream){
@@ -97,4 +148,24 @@ function removeDesktop(stream){
     .addClass("is-link")
     .text("画面を共有");
     sharingState = "non-sharing"
+}
+
+function setDafaultImgButton(){
+    let dialog = $("<input>", {type: "file"});
+    dialog.on("change",function(){
+        console.log("Image file open");
+        let reader = new FileReader(); 
+        reader.onload = function(e) {
+            const loadImg = new Image();
+            loadImg.onload = function() {
+                canvas.width  = loadImg.naturalWidth;
+                canvas.height = loadImg.naturalHeight;
+                ctx.drawImage(loadImg, 0, 0);
+            }
+            loadImg.src = e.target.result;
+        }
+        reader.readAsDataURL($(dialog).get(0).files[0]); 
+    })    
+    dialog.trigger("click");
+    
 }

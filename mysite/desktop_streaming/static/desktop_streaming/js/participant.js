@@ -17,12 +17,10 @@ async function init(){
     //let localStream = WebRTCConnection.getFakeStream(new AudioContext());
     //connection.setStreams(localStream);
     connection.createMessagingChannel();
-    console.log("connect!");
     connection.connect();
     connection.connection.ontrack = function(e) {
         console.log("ontrack\n%o",e);
         document.getElementById("remote_desktop").srcObject = e.streams[0];
-        //document.getElementById("hangup-button").disabled = false;
     };
     connections.push(connection);
     console.log(connections);
