@@ -7,10 +7,15 @@ pipenvとpyenvをインストール
 pipfileのあるディレクトリに移動  
 仮想環境を作成する  
 ```
+$ cd ~~
 $ pipenv install
 ```
 ## 実行方法
-### まずdjangoのサーバーを立ち上げる
+### データベースを準備する
+```
+$ python manage.py migrate
+```
+### Djangoのサーバーを立ち上げる
 ```
 $ pipenv shell
 $ python mysite/manage.py runserver
