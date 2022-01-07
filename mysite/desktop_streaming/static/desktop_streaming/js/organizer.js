@@ -8,7 +8,10 @@ let defaultStream;
 let desktopStream;
 let defaultImg;
 let canvas;
-let ctx;
+let canvasCtx;
+let streamingCanvas;
+let streamingCanvasCtx;
+
 let sharingState; //"sharing", "not-sharing";
 
 console.log("create_room.js is loaded");
@@ -25,42 +28,37 @@ function init(){
     canvas = document.createElement("canvas");
     canvas.width = 256;
     canvas.height = 256;
-    defaultStream = canvas.captureStream(30);
-    currentStream = defaultStream;   
-    $("#main_view").get(0).srcObject = currentStream;
-    //$(canvas).appendTo("body");
-    ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-    ctx.fillStyle = "#000";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
+    canvasCtx = canvas.getContext("2d");
+    streamingCanvas = document.createElement("canvas");
+    streamingCanvasCtx = streamingCanvas.getContext("2d");
     
+    //$(streamingCanvas).appendTo("body");
+    
+    canvasCtx.fillStyle = "#fff";
+    canvasCtx.fillRect(0,0,canvas.width, canvas.height);
+    canvasCtx.fillStyle = "#000";
+    canvasCtx.textAlign = "center";
+    canvasCtx.textBaseline = "middle";
+    canvasCtx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
+    canvasDraw();
+
+    defaultStream = streamingCanvas.captureStream(1);
+    currentStream = defaultStream;
+    $("#main_view").get(0).srcObject = currentStream;
     sharingState = "non-sharing";
-    setTimeout(function(){
-        console.log("setStream");
-        //CanvasのStreamは先に開いてから描画しないとだめっぽい．
-        //表示したいcanvasを予め作っておいて，送信用のcanvasにコピーするのが良いか
-        //defaultStream = canvas.captureStream(30);
-        currentStream = defaultStream;    
-        $("#main_view").get(0).srcObject = currentStream;
-        setTimeout(function(){
-            canvasDraw();
-        },1000);
-    },1000);
+
     timer = setInterval(checkOffer,3000);
-    canvasTimer = setInterval(canvasDraw, 100);
+    canvasTimer = setInterval(canvasDraw, 200);
 }
 
 function canvasDraw(){
-    //
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-    ctx.fillStyle = "#000";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
+    console.log("canvasDraw()");
+    if(streamingCanvas.width != canvas.width || streamingCanvas.height != canvas.height ){
+        streamingCanvas.width = canvas.width;
+        streamingCanvas.height = canvas.height;
+    }
+    
+    streamingCanvasCtx.drawImage(canvas,0,0);
 }
 
 //あとでoffer listnerとして commonに出す
@@ -160,7 +158,7 @@ function setDafaultImgButton(){
             loadImg.onload = function() {
                 canvas.width  = loadImg.naturalWidth;
                 canvas.height = loadImg.naturalHeight;
-                ctx.drawImage(loadImg, 0, 0);
+                canvasCtx.drawImage(loadImg, 0, 0);
             }
             loadImg.src = e.target.result;
         }
