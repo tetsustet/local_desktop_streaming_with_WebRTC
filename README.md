@@ -22,23 +22,22 @@ $ python mysite/manage.py runserver
 ```
 ### 配信者
 http://localhost:8000/desktop-streaming/create-room/ にアクセス
-![create room img](/img/create_room.png) 
+![create room img](/img/create_room.png)<br>
 部屋idを入力して作成をクリックする．
 ### 視聴者
 http://localhost:8000/desktop-streaming/ にアクセス
-![join img](/img/join.png) 
+![join img](/img/join.png)<br>
 参加したい部屋idを入力して参加する．
 ### 画面共有する
 画面を共有をクリック  
-![click share desktop button](/img/share1.png)  
+![click share desktop button](/img/share1.png)<br>
 共有する画面を選択し，共有をクリック  
-![choose  desktop and click share button](/img/share2.png)  
+![choose  desktop and click share button](/img/share2.png)<br>
 共有が開始される  
-![sharing desktop begin](/img/share3.png)  
+![sharing desktop begin](/img/share3.png)<br>
 共有を停止する場合は赤い共有を停止ボタンをクリック
-![push red button to stop desktop begin](/img/share4.png)  
-![a after stop sharing screen shot ](/img/share5.png)  
-
+![push red button to stop desktop begin](/img/share4.png)<br>
+![a after stop sharing screen shot ](/img/share5.png)<br>
 
 ## メモ
 Firefox以外はhttpだとlocalHostでないとgetUserMediaができないらしい．  
