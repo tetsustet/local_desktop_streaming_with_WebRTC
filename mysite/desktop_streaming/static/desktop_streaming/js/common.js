@@ -11,12 +11,14 @@ class WebRTCListener{
     #timer;
     #interval;
     #onConnect;
+    #defaultStream;
 
-    constructor(apiRoot, interval, onConnect){
+    constructor(apiRoot, interval, onConnect, defaultStream){
         this.apiRoot = apiRoot;
         this.#interval = Number.isNaN(interval) ? interval : 1000;
         this.#timer = null;
         this.#onConnect = onConnect;
+        this.#defaultStream = defaultStream;
 
         this.setAPIRoot = this.setAPIRoot.bind(this);
         this.setIntervalTime = this.setIntervalTime.bind(this);
@@ -66,8 +68,8 @@ class WebRTCListener{
             console.log(`connect()`);
             connection.connect();
             connection.onready = function(){
-                connection.setStreams(currentStream);
-            }
+                connection.setStreams(this.#defaultStream);
+            }.bind(this);
             this.#onConnect(connection);
         
             //answer送ったらofferは消しておく

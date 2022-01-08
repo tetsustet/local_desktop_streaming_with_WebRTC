@@ -53,7 +53,7 @@ function init(){
     const apiRoot = `../../../api/`;
     listener = new WebRTCListener(apiRoot, 1000, function(connection){
         connections.push(connection);
-    });
+    }, currentStream);
     listener.start();
 
     canvasTimer = setInterval(canvasDraw, 200);
