@@ -40,4 +40,4 @@ http://localhost:8000/desktop-streaming/ にアクセス
 ![a after stop sharing screen shot ](/img/share5.png)<br>
 
 ## メモ
-Firefox以外はhttpだとlocalHostでないとgetUserMediaができないらしい．  
+* httpではnavigator.mediaDeviccesはlocalhost以外undefinedになり，画面共有をすることができない．

@@ -12,6 +12,8 @@ let canvasCtx;
 let streamingCanvas;
 let streamingCanvasCtx;
 
+let listener;
+
 let sharingState; //"sharing", "not-sharing";
 
 console.log("create_room.js is loaded");
@@ -32,7 +34,7 @@ function init(){
     streamingCanvas = document.createElement("canvas");
     streamingCanvasCtx = streamingCanvas.getContext("2d");
     
-    //$(streamingCanvas).appendTo("body");
+    $(streamingCanvas).appendTo("body");
     
     canvasCtx.fillStyle = "#fff";
     canvasCtx.fillRect(0,0,canvas.width, canvas.height);
@@ -42,60 +44,28 @@ function init(){
     canvasCtx.fillText("配信は一時停止中です", canvas.width / 2, canvas.height / 2);
     canvasDraw();
 
-    defaultStream = streamingCanvas.captureStream(1);
+    defaultStream = streamingCanvas.captureStream();
     currentStream = defaultStream;
     $("#main_view").get(0).srcObject = currentStream;
+
     sharingState = "non-sharing";
 
-    timer = setInterval(checkOffer,3000);
+    const apiRoot = `../../../api/`;
+    listener = new WebRTCListener(apiRoot, 1000, function(connection){
+        connections.push(connection);
+    });
+    listener.start();
+
     canvasTimer = setInterval(canvasDraw, 200);
 }
 
 function canvasDraw(){
-    console.log("canvasDraw()");
     if(streamingCanvas.width != canvas.width || streamingCanvas.height != canvas.height ){
         streamingCanvas.width = canvas.width;
         streamingCanvas.height = canvas.height;
     }
     
     streamingCanvasCtx.drawImage(canvas,0,0);
-}
-
-//あとでoffer listnerとして commonに出す
-async function checkOffer(){
-    // console.log("waitOffer()");
-    let response = await fetch(`../../../api/sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`,{
-        method: 'GET',
-        credentials: 'same-origin',
-        headers: {
-            // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
-            'X-CSRFToken': Cookies.get('csrftoken')
-        },
-    });
-
-    //ここを見ながら書いた https://github.com/webrtc/samples/blob/gh-pages/src/content/peerconnection/pc1/js/main.js
-    let data = await response.json();
-    if(data.length != 0)console.log(data);
-    for(let i = 0; i < data.length; i++){
-        let connection = await WebRTCConnection.acceptConnection(data[i].from_uuid, data[i].sdp_text, "vannilaICE");
-        let localStream = WebRTCConnection.getFakeStream(new AudioContext());
-        console.log(`connect()`);
-        connection.connect();
-        connection.onready = function(){
-            connection.setStreams(currentStream);
-        }
-        connections.push(connection);
-    
-        //answer送ったらofferは消しておく
-        await fetch(`../../../api/sdp/${data[i].id}/`,{
-            method: 'DELETE',
-            credentials: 'same-origin',
-            headers: {
-                // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
-                'X-CSRFToken': Cookies.get('csrftoken')
-            },
-        });
-    }
 }
 
 function shareDesktopButton(){

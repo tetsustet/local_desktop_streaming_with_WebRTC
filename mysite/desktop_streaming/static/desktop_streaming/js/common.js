@@ -6,6 +6,83 @@
 // ・DataChannelを用いたSDPの交換
 // https://qiita.com/massie_g/items/1316eb8c6e0d171307f5
 
+class WebRTCListener{
+    apiRoot;
+    #timer;
+    #interval;
+    #onConnect;
+
+    constructor(apiRoot, interval, onConnect){
+        this.apiRoot = apiRoot;
+        this.#interval = Number.isNaN(interval) ? interval : 1000;
+        this.#timer = null;
+        this.#onConnect = onConnect;
+
+        this.setAPIRoot = this.setAPIRoot.bind(this);
+        this.setIntervalTime = this.setIntervalTime.bind(this);
+        this.start = this.start.bind(this);
+        this.stop = this.stop.bind(this);
+        this.checkOffer = this.checkOffer.bind(this);
+    }
+
+    setAPIRoot(apiRoot){
+        this.apiRoot = apiRoot;
+    }
+    setIntervalTime(interval){
+        console.assert(Number.isNan(interval), interval);
+        this.#interval = interval;
+        if(this.#timer){
+            clearInterval(this.#timer);
+            this.#timer = setInterval(this.checkOffer, this.#interval);
+        }
+    }
+
+    start(){
+        this.#timer = setInterval(this.checkOffer, this.#interval);
+    }
+
+    stop(){
+        clearInterval(this.#timer);
+        this.#timer = null;
+    }
+    
+    async checkOffer(){
+        console.log(this.apiRoot + `sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`);
+        let response = await fetch(this.apiRoot + `sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`,{
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+                'X-CSRFToken': Cookies.get('csrftoken')
+            },
+        });
+    
+        //ここを見ながら書いた https://github.com/webrtc/samples/blob/gh-pages/src/content/peerconnection/pc1/js/main.js
+        let data = await response.json();
+        if(data.length != 0)console.log(data);
+        for(let i = 0; i < data.length; i++){
+            let connection = await WebRTCConnection.acceptConnection(data[i].from_uuid, data[i].sdp_text, "vannilaICE");
+            let localStream = WebRTCConnection.getFakeStream(new AudioContext());
+            console.log(`connect()`);
+            connection.connect();
+            connection.onready = function(){
+                connection.setStreams(currentStream);
+            }
+            this.#onConnect(connection);
+        
+            //answer送ったらofferは消しておく
+            await fetch(this.apiRoot + `sdp/${data[i].id}/`,{
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: {
+                    // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+                    'X-CSRFToken': Cookies.get('csrftoken')
+                },
+            });
+        }
+    }
+}
+
 class WebRTCConnection{
     isOffer;
     connection;

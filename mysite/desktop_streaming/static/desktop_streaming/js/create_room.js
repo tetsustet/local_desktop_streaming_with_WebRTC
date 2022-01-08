@@ -32,7 +32,7 @@ function init() {
                 
                 if(!uuid){
                     uuid = UUID.generate();
-                    Cookies.set('uuid', uuid);
+                    Cookies.set('uuid', uuid, {sameSite:"Strict"});
                     alert("UUID is updated");
                 }
                 let data ={
@@ -53,7 +53,15 @@ function init() {
                     console.log("create streaming page");
                     window.location.href = `../rooms/${roomId}/organizer/`
                 });
+            }
+        });
 
+        //何故か動かない
+        $("#room_id").keydown(function(e){
+            console.log("keydown()");
+            if (e.keyCode == 13) {
+                e.preventDefault();
+                $("#join_button").trigger("click");
             }
         });
      });
