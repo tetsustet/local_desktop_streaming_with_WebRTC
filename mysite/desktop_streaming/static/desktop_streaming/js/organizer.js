@@ -6,7 +6,6 @@ let connections = new Array();
 let currentStream;
 let defaultStream;
 let desktopStream;
-let defaultImg;
 let canvas;
 let canvasCtx;
 let streamingCanvas;
@@ -135,5 +134,4 @@ function setDafaultImgButton(){
         reader.readAsDataURL($(dialog).get(0).files[0]); 
     })    
     dialog.trigger("click");
-    
 }

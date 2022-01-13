@@ -49,7 +49,7 @@ class WebRTCListener{
     }
     
     async checkOffer(){
-        console.log(this.apiRoot + `sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`);
+        //console.log(this.apiRoot + `sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`);
         let response = await fetch(this.apiRoot + `sdp/?${new URLSearchParams({to_uuid: Cookies.get('uuid'), is_solved:"False"})}`,{
             method: 'GET',
             credentials: 'same-origin',
@@ -68,6 +68,7 @@ class WebRTCListener{
             console.log(`connect()`);
             connection.connect();
             connection.onready = function(){
+                console.log(this);
                 connection.setStreams(this.#defaultStream);
             }.bind(this);
             this.#onConnect(connection);
